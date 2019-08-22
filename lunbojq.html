@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>轮播图</title>
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="./css/lubotu.css">
+</head>
+<body>
+<div class="swiper-wrapper" id="swiper-wrapper">
+    <div class="swiper-list" id="swiper-list">
+      <div class="swiper-item" style="background-color: #82A6F5;">1</div>
+      <div class="swiper-item" style="background-color: #EAF048;">2</div>
+      <div class="swiper-item" style="background-color: #9FF048;">3</div>
+      <div class="swiper-item" style="background-color: #2A5200;">4</div>
+      <div class="swiper-item" style="background-color: #F6D6FF;">5</div>
+    </div>
+    <div class="swiper-pagination">
+     <!--  <span class="swiper-pagination-switch active"></span>
+      <span class="swiper-pagination-switch"></span>
+      <span class="swiper-pagination-switch"></span>
+      <span class="swiper-pagination-switch"></span>
+      <span class="swiper-pagination-switch"></span> -->
+    </div>
+    <a class="swiper-arrow swiper-arrow-left" id="swiper-prev">&lt;</a>
+    <a class="swiper-arrow swiper-arrow-right" id="swiper-next">&gt;</a>
+  </div>
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+ <script type="text/javascript">    
+  const PAGE = {
+    data:{
+      index:0,//当前第几个
+      duration:500,// 滑动时长
+      isLock: false, // 锁
+      translateX : 0,//偏移量
+      defaultLenght: null,//默认的项目数量
+      itemWidth: null//单个项目的长度
+    },
+    init:function(){
+      this.bind();
+      this.clone();
+    },
+    bind:function(){
+      $('#swiper-prev').on('click',this.swiperPrev);
+      $('#swiper-next').on('click',this.swiperNext);       
+                
+      let swiperPagination = $('.swiper-pagination');
+      let swiperItem = $('.swiper-item');
+      for (let i = 0; i < swiperItem.length; i++) {
+        swiperPagination.append(`<span class="swiper-pagination-switch" data-index="${i}"></span>`); 
+      }
+      $('.swiper-pagination-switch').on('click',this.swiperPagination);
+      window.addEventListener('resize',this.swiperReset); 
+    },
+    swiperReset:function(e){
+      let swiperList = $('#swiper-list');
+      let swiperItemWidth = swiperList.width();
+      let index = PAGE.data.index;
+      let translateX = -(swiperItemWidth + swiperItemWidth * index);
+      PAGE.data.itemWidth = swiperItemWidth;
+      PAGE.data.translateX = translateX;
+      swiperList.css('transform', `translateX(${translateX}px)`);
+    },
+    hightlight: function(index) {
+      let swiperItem = $('.swiper-pagination-switch');
+      for (let i = 0; i < swiperItem.length; i++) {
+        swiperItem[i].className = 'swiper-pagination-switch';
+      }
+        swiperItem[index].className = 'swiper-pagination-switch active';
+    },
+    swiperPagination:function(e){
+      let index = e.target.dataset.index;
+      index = Number(index);
+      PAGE.goIndex(index);
+    },
+    swiperPrev:function(){          
+      let index = PAGE.data.index;
+      PAGE.goIndex(index-1);          
+    },
+    swiperNext:function(){
+      let index = PAGE.data.index;
+      PAGE.goIndex(index+1);
+        },
+    clone:function(){
+      let swiperItem = $('.swiper-item');
+      let firstItem = swiperItem.eq(0).clone();
+      let lastItem = swiperItem.eq(swiperItem.length-1).clone();
+      let index = PAGE.data.index;
+      let itemWidth = swiperItem.width();
+      let translateX  = -(itemWidth + itemWidth * index);
+
+      PAGE.data.defaultLenght = swiperItem.length;
+      PAGE.data.itemWidth = itemWidth;
+      PAGE.data.translateX = translateX;
+
+      $('#swiper-list').append(firstItem);
+      $('#swiper-list').prepend(lastItem);
+
+      PAGE.goIndex(index);
+    },
+        
+    goIndex:function(index){
+      let duration = PAGE.data.duration;
+      let itemWidth = PAGE.data.itemWidth;
+      let translateX = PAGE.data.translateX; 
+      let targetLocation = -(itemWidth + itemWidth * index);
+     
+      let isLock = PAGE.data.isLock;
+        if (isLock) {
+          return
+        }
+      PAGE.data.isLock = true;
+      let swiperList = $('#swiper-list');
+      PAGE.animateTo(translateX,targetLocation,duration,function(value){
+        swiperList.css('transform', `translateX(${value}px)`);
+      },function(value){
+          let defaultLenght = PAGE.data.defaultLenght;
+          if (index === -1) {
+            index = defaultLenght-1;
+            value = -(itemWidth + itemWidth * index);
+          }  
+          if (index === defaultLenght) {
+            index = 0;
+            value = -(itemWidth + itemWidth * index);
+          }
+          swiperList.css('transform', `translateX(${value}px)`);
+          PAGE.data.index = index;
+          PAGE.data.translateX = value;
+          PAGE.data.isLock = false;
+          PAGE.hightlight(index);
+        })
+    },
+    animateTo:function(begin,end,duration,changeCallback,finishCallback){
+      let startTime = Date.now();
+      requestAnimationFrame(function update(){
+        let dataNow = Date.now();
+        let time = dataNow - startTime;
+        let value = PAGE.linear(time,begin,end,duration);
+        typeof changeCallback === 'function' && changeCallback(value)
+        if(startTime + duration > dataNow){
+          requestAnimationFrame(update)
+        }else{
+            typeof finishCallback === 'function' && finishCallback(end)
+         }    
+      }) 
+    },
+    linear:function(time, begin, end, duration){
+      return ( end - begin ) * time / duration + begin;
+    }
+  }
+
+  PAGE.init();
+
+   
+</script>
+</body>
+</html>
